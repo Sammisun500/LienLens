@@ -48,14 +48,14 @@ st.subheader("🔍 Start a New Title Search")
 address = st.text_input(
     "Property Address",
     value="",
-    placeholder="e.g. 606 Norris Street, Chester, PA 19013"
+    placeholder="e.g. 606 Norris Street, Chester, PA 19013 or any other address"
 )
 
 if st.button("📡 Pull Live Public Records for this Address", type="primary", use_container_width=True):
     if not address:
         st.warning("Please enter an address first.")
     else:
-        with st.spinner("Detecting county and opening public portals..."):
+        with st.spinner("Detecting county and state..."):
             try:
                 headers = {'User-Agent': 'lienlens-app'}
                 resp = requests.get(
@@ -73,27 +73,18 @@ if st.button("📡 Pull Live Public Records for this Address", type="primary", u
             except:
                 county, state = "Unknown", "Unknown"
 
-        # Special auto-fill for your Norris Street test address
-        if "606 Norris" in address or "Norris Street" in address:
-            st.success("🔥 Demo mode: Norris Street data loaded from public records")
-            st.info("""
-**Current Owner**: ARMS Investments, LLC  
-**Previous Owner**: Denise D. Grant  
-**Foreclosure**: Regions Bank d/b/a Regions Mortgage (Case CV-2024-009219 – Sheriff Sale)  
-**Open Liens after sale**: None
-            """)
-
         st.subheader(f"🔗 Official {county} County Public Record Links")
-        st.markdown("**Recorder of Deeds** – Ownership, deeds, mortgages")
-        st.markdown("**Property Assessment / Tax** – Current owner & tax liens")
-        st.markdown("**Court / Judgments** – Foreclosures, bankruptcies, liens")
-        st.caption("Open these links, search your address, then fill in the Key Findings below.")
+        if state == "Pennsylvania":
+            st.markdown("**Recorder of Deeds** – Ownership, deeds, mortgages")
+            st.markdown("**Property Assessment / Tax** – Current owner & tax liens")
+            st.markdown("**Court / Judgments** – Foreclosures, bankruptcies, liens")
+            st.caption("Open the links above, search your address, then fill in the Key Findings below.")
+        else:
+            st.info("County-specific links for this state are coming soon. For now use your local county recorder and court websites.")
 
 st.subheader("Key Findings")
-owner = st.text_input("Current Owner", 
-    "ARMS Investments, LLC" if ("606 Norris" in address or "Norris Street" in address) else "", key="owner")
-open_liens = st.text_input("Open Mortgages / Liens", 
-    "None (post-foreclosure sheriff sale)" if ("606 Norris" in address or "Norris Street" in address) else "", key="open_liens")
+owner = st.text_input("Current Owner", "", key="owner")
+open_liens = st.text_input("Open Mortgages / Liens", "", key="open_liens")
 judgments = st.text_input("Judgments / Tax Liens", "", key="judgments")
 bankruptcies = st.text_input("Bankruptcies", "", key="bankruptcies")
 other_liens = st.text_area("Other Liens (municipal, federal, etc.)", "", key="other")
