@@ -47,34 +47,37 @@ with st.sidebar:
 st.subheader("🔍 Start a New Title Search")
 address = st.text_input(
     "Property Address",
-    value="606 Norris Street, Chester, PA 19013",
-    placeholder="e.g. 123 Main St, Any City, PA 19013"
+    value="",
+    placeholder="e.g. 606 Norris Street, Chester, PA 19013"
 )
 
 if st.button("📡 Pull Live Public Records for this Address", type="primary", use_container_width=True):
-    with st.spinner("Detecting county & state + opening official public portals..."):
-        try:
-            headers = {'User-Agent': 'lienlens-app'}
-            resp = requests.get(
-                f"https://nominatim.openstreetmap.org/search?q={address}&format=json&addressdetails=1&limit=1",
-                headers=headers
-            )
-            data = resp.json()
-            if data:
-                addr = data[0]['address']
-                county = addr.get('county', 'Unknown County').replace(' County', '')
-                state = addr.get('state', 'Unknown State')
-                st.success(f"✅ Detected: {county} County, {state}")
-            else:
+    if not address:
+        st.warning("Please enter an address first")
+    else:
+        with st.spinner("Detecting county and opening official public portals..."):
+            try:
+                headers = {'User-Agent': 'lienlens-app'}
+                resp = requests.get(
+                    f"https://nominatim.openstreetmap.org/search?q={address}&format=json&addressdetails=1&limit=1",
+                    headers=headers
+                )
+                data = resp.json()
+                if data:
+                    addr = data[0]['address']
+                    county = addr.get('county', 'Unknown County').replace(' County', '')
+                    state = addr.get('state', 'Unknown State')
+                    st.success(f"✅ Detected: {county} County, {state}")
+                else:
+                    county, state = "Unknown", "Unknown"
+            except:
                 county, state = "Unknown", "Unknown"
-        except:
-            county, state = "Unknown", "Unknown"
 
-    st.subheader(f"🔗 Official {county} County Public Record Links")
-    st.markdown("**1. Recorder of Deeds / Deeds & Mortgages** – Ownership & liens")
-    st.markdown("**2. Property Assessment / Tax** – Current owner & tax liens")
-    st.markdown("**3. Court / Civil Judgments** – Foreclosures, bankruptcies, judgments")
-    st.caption("Click the links above, search your address, then copy the findings into the boxes below.")
+        st.subheader(f"🔗 Official {county} County Public Record Links")
+        st.markdown("**1. Recorder of Deeds** – Ownership, deeds, mortgages")
+        st.markdown("**2. Property Assessment / Tax** – Current owner & tax liens")
+        st.markdown("**3. Court / Judgments** – Foreclosures, bankruptcies, liens")
+        st.caption("Open the links, search your address, then copy the info into Key Findings below.")
 
 st.subheader("Key Findings (copy from the public websites)")
 owner = st.text_input("Current Owner", key="owner")
@@ -155,4 +158,4 @@ if "show_history" in st.session_state and st.session_state.show_history:
         st.rerun()
 
 st.divider()
-st.info("✅ The app now automatically detects any address and directs you to the exact public county websites. Test it with any address!")
+st.info("✅ For true one-click auto-fill of Key Findings, we can add the ATTOM Data API ($499/year for 200 reports). Would you like me to add that next?")
