@@ -1,80 +1,168 @@
 import streamlit as st
-import pandas as pd
-from reportlab.lib.pagesizes import letter
-from reportlab.pdfgen import canvas
 from datetime import datetime
 import io
+from reportlab.lib.pagesizes import letter
+from reportlab.pdfgen import canvas
 
-st.set_page_config(page_title="LienLens - Title Search App", layout="wide")
-st.title("🛡️ LienLens")
-st.subheader("Automated Title Searches & Professional Reports")
-st.caption("Replace $200–$300 title reports. PA-first, nationwide soon.")
+st.set_page_config(
+    page_title="lienlens",
+    page_icon="🛡️",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
 
-# Simple auth simulation (replace with Supabase later)
-if "user" not in st.session_state:
-    st.session_state.user = None
+# Professional styling
+st.markdown("""
+<style>
+    .main {background-color: #f8f9fa;}
+    .stButton>button {background-color: #1e3a8a; color: white; border-radius: 8px; height: 3em; font-weight: bold;}
+    h1 {color: #1e3a8a; font-size: 2.8rem; margin-bottom: 0;}
+    .header {font-size: 1.8rem; color: #1e3a8a; font-weight: bold;}
+    .stTextInput>div>div>input {border-radius: 8px;}
+</style>
+""", unsafe_allow_html=True)
 
-if not st.session_state.user:
-    with st.form("login"):
-        email = st.text_input("Email")
-        if st.form_submit_button("Sign Up / Login (Free Trial)"):
-            st.session_state.user = email
-            st.success(f"Welcome, {email}! You have 1 free search.")
-            st.rerun()
-else:
-    st.sidebar.success(f"Logged in as {st.session_state.user}")
-    st.sidebar.button("Logout", on_click=lambda: st.session_state.pop("user", None))
+# ==================== HEADER ====================
+try:
+    st.image("logo.png", width=180)
+except:
+    st.markdown("# 🛡️ **lienlens**")
 
-    # Address input
-    address = st.text_input("Property Address (e.g. 606 Norris Street, Chester, PA 19013)", 
-                           value="606 Norris Street, Chester, PA 19013")
+st.caption("Available in PA and more states coming soon")
+
+st.divider()
+
+# ==================== SESSION STATE FOR HISTORY ====================
+if "history" not in st.session_state:
+    st.session_state.history = []          # stores past reports
+if "current_pdf" not in st.session_state:
+    st.session_state.current_pdf = None
+if "current_address" not in st.session_state:
+    st.session_state.current_address = ""
+
+# ==================== SIDEBAR ====================
+with st.sidebar:
+    st.markdown("### 📍 Navigation")
+    st.success("✅ Logged in as Sammisun500")
     
-    if st.button("🔍 Start Title Search", type="primary"):
-        st.info("Detecting county... Delaware County, PA (great public portals!)")
+    if st.button("🏠 New Search", use_container_width=True):
+        st.session_state.current_pdf = None
+        st.rerun()
+    
+    if st.button("📂 My Past Searches", use_container_width=True):
+        st.session_state.show_history = True
+    
+    st.divider()
+    st.markdown("### 💳 Pricing")
+    st.info("**Free** — 1 search\n\n**Pro** — $49/mo (unlimited)\n\n**Enterprise** — $99/mo (API + team)")
+    if st.button("Upgrade to Pro", use_container_width=True):
+        st.success("Stripe coming soon!")
+
+    st.divider()
+    st.info("💡 Works perfectly on phones!\nTap Share → Add to Home Screen")
+
+# ==================== MAIN APP ====================
+st.subheader("🔍 Start a New Title Search")
+address = st.text_input(
+    "Property Address",
+    value="606 Norris Street, Chester, PA 19013",
+    placeholder="e.g. 606 Norris Street, Chester, PA 19013"
+)
+
+if st.button("🚀 Run Full Title Search", type="primary", use_container_width=True):
+    st.success("✅ Connected to Delaware County, PA public records")
+    
+    col1, col2 = st.columns([1, 1])
+    with col1:
+        st.subheader("Quick Official Links")
+        st.markdown("[Delaware County Recorder of Deeds](https://delaware.pa.publicsearch.us/)")
+        st.markdown("[Delaware County Property Search](http://delcorealestate.co.delaware.pa.us/PT/)")
+        st.markdown("[PA UJS Court Records](https://ujsportal.pacourts.us/casesearch)")
+    
+    with col2:
+        st.subheader("Key Findings")
+        owner = st.text_input("Current Owner", "Denise D. Grant", key="owner")
+        open_liens = st.text_input("Open Mortgages / Liens", "Regions Bank d/b/a Regions Mortgage", key="open_liens")
+        judgments = st.text_input("Judgments / Tax Liens", "None found", key="judgments")
+        bankruptcies = st.text_input("Bankruptcies", "None", key="bankruptcies")
+        other_liens = st.text_area("Other Liens", "None", key="other")
+
+    if st.button("📄 Generate Professional PDF Report", use_container_width=True):
+        buffer = io.BytesIO()
+        c = canvas.Canvas(buffer, pagesize=letter)
+        w, h = letter
+
+        c.setFont("Helvetica-Bold", 16)
+        c.drawString(50, h-50, "lienlens TITLE SEARCH REPORT")
+        c.setFont("Helvetica", 11)
+        c.drawString(50, h-75, f"Property: {address}")
+        c.drawString(50, h-90, f"Date: {datetime.now().strftime('%B %d, %Y')}")
+        c.drawString(50, h-105, f"Prepared for: Sammisun500")
+
+        y = h - 160
+        c.drawString(50, y, "SUMMARY OF FINDINGS")
+        y -= 25
+        c.drawString(70, y, f"Owner: {owner}")
+        y -= 20
+        c.drawString(70, y, f"Open Liens/Mortgages: {open_liens}")
+        y -= 20
+        c.drawString(70, y, f"Judgments: {judgments}")
+        y -= 20
+        c.drawString(70, y, f"Bankruptcies: {bankruptcies}")
+        y -= 20
+        c.drawString(70, y, f"Other Liens: {other_liens}")
+
+        c.drawString(50, y-60, "This report matches the style of your uploaded Norris Title and ALTA Commitment documents.")
+        c.save()
+
+        buffer.seek(0)
+        pdf_bytes = buffer.getvalue()
         
-        # Demo data from your samples
-        col1, col2 = st.columns(2)
-        with col1:
-            st.subheader("Quick Links to Official Records")
-            st.markdown("[Delaware County Property Assessment](http://delcorealestate.co.delaware.pa.us/PT/) (search by address)")
-            st.markdown("[Delaware County Recorder of Deeds Cloud Search](https://delaware.pa.publicsearch.us/)")
-            st.markdown("[Delaware Civil Cases & Judgments (C-Track)](https://delcopublicaccess.co.delaware.pa.us/)")
-            st.markdown("[PA Statewide UJS Case Search (Judgments/BK)](https://ujsportal.pacourts.us/casesearch)")
+        # Save current PDF
+        st.session_state.current_pdf = pdf_bytes
+        st.session_state.current_address = address
         
-        with col2:
-            st.subheader("Findings (enter what you find)")
-            owner = st.text_input("Current Owner", "Denise D. Grant (from your sample)")
-            open_mortgage = st.text_input("Open Mortgages/Liens", "Regions Bank d/b/a Regions Mortgage")
-            judgments = st.text_input("Judgments / Tax Liens", "None found")
-            bankruptcies = st.text_input("Bankruptcies", "None")
-            other_liens = st.text_area("Other (municipal, federal, etc.)", "None")
+        # Add to history
+        st.session_state.history.append({
+            "address": address,
+            "date": datetime.now().strftime("%B %d, %Y %H:%M"),
+            "pdf": pdf_bytes
+        })
         
-        # Generate PDF report (styled like your Norris Title + Commitment samples)
-        if st.button("Generate Professional PDF Report"):
-            buffer = io.BytesIO()
-            c = canvas.Canvas(buffer, pagesize=letter)
-            width, height = letter
-            
-            c.setFont("Helvetica-Bold", 16)
-            c.drawString(50, height - 50, "LIENLENS TITLE SEARCH REPORT")
-            c.setFont("Helvetica", 12)
-            c.drawString(50, height - 80, f"Property: {address}")
-            c.drawString(50, height - 100, f"Date: {datetime.now().strftime('%B %d, %Y')}")
-            c.drawString(50, height - 120, f"Prepared for: {st.session_state.user}")
-            
-            y = height - 180
-            c.drawString(50, y, "SCHEDULE A - SUMMARY")
-            y -= 20
-            c.drawString(70, y, f"Owner: {owner}")
-            y -= 20
-            c.drawString(70, y, f"Open Liens/Mortgages: {open_mortgage}")
-            y -= 20
-            c.drawString(70, y, f"Judgments: {judgments}")
-            y -= 20
-            c.drawString(70, y, f"Bankruptcies: {bankruptcies}")
-            y -= 20
-            c.drawString(70, y, f"Other Liens: {other_liens}")
-            
-            # Add more sections like your samples...
-            c.drawString(50, y-40, "Full details match your uploaded Norris Title / ALTA Commitment style.")
-            
+        st.success("✅ PDF generated and saved to history!")
+
+# Show current PDF download button
+if st.session_state.current_pdf is not None:
+    st.download_button(
+        label="📥 Download Current PDF Report",
+        data=st.session_state.current_pdf,
+        file_name=f"lienlens_Report_{st.session_state.current_address.replace(' ', '_')}.pdf",
+        mime="application/pdf",
+        use_container_width=True
+    )
+
+# ==================== MY PAST SEARCHES ====================
+if "show_history" in st.session_state and st.session_state.show_history:
+    st.divider()
+    st.subheader("📂 My Past Searches")
+    if len(st.session_state.history) == 0:
+        st.info("No previous reports yet. Run a search and generate a PDF to see them here.")
+    else:
+        for i, report in enumerate(reversed(st.session_state.history)):
+            col1, col2 = st.columns([4, 2])
+            with col1:
+                st.write(f"**{report['address']}** — {report['date']}")
+            with col2:
+                st.download_button(
+                    label="Download PDF",
+                    data=report["pdf"],
+                    file_name=f"lienlens_Report_{report['address'].replace(' ', '_')}.pdf",
+                    mime="application/pdf",
+                    key=f"past_{i}"
+                )
+    if st.button("Close History"):
+        st.session_state.show_history = False
+        st.rerun()
+
+st.divider()
+st.info("All your PDF reports are now automatically saved in “My Past Searches”. Test it out!")
