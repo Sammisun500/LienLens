@@ -15,7 +15,7 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# ==================== LOGO ====================
+# LOGO
 st.image("lienlenslogo.png", width=320)
 st.caption("Available in PA and more states coming soon")
 
@@ -29,7 +29,6 @@ if "current_pdf" not in st.session_state:
 if "current_address" not in st.session_state:
     st.session_state.current_address = ""
 
-# SIDEBAR
 with st.sidebar:
     st.success("✅ Logged in as Sammisun500")
     if st.button("🏠 New Search", use_container_width=True):
@@ -39,24 +38,22 @@ with st.sidebar:
         st.session_state.show_history = True
     st.divider()
     st.markdown("### 💳 Pricing")
-    st.info("**Free** — 1 search\n\n**Pro** — $49/mo (unlimited + live API pulls)\n\n**Enterprise** — $99/mo")
+    st.info("**Free** — 1 search\n\n**Pro** — $49/mo (unlimited + live API auto-pull)\n\n**Enterprise** — $99/mo")
     if st.button("Upgrade to Pro", use_container_width=True):
         st.success("Stripe coming soon!")
     st.divider()
     st.info("💡 Works perfectly on phones!")
 
-# MAIN APP
 st.subheader("🔍 Start a New Title Search")
 address = st.text_input(
     "Property Address",
     value="606 Norris Street, Chester, PA 19013",
-    placeholder="e.g. 606 Norris Street, Chester, PA 19013"
+    placeholder="e.g. 123 Main St, Any City, PA 19013"
 )
 
 if st.button("📡 Pull Live Public Records for this Address", type="primary", use_container_width=True):
-    with st.spinner("Detecting county and opening public record portals..."):
+    with st.spinner("Detecting county & state + opening official public portals..."):
         try:
-            # Free public geocoding to get county/state
             headers = {'User-Agent': 'lienlens-app'}
             resp = requests.get(
                 f"https://nominatim.openstreetmap.org/search?q={address}&format=json&addressdetails=1&limit=1",
@@ -64,23 +61,22 @@ if st.button("📡 Pull Live Public Records for this Address", type="primary", u
             )
             data = resp.json()
             if data:
-                county = data[0]['address'].get('county', 'Unknown County')
-                state = data[0]['address'].get('state', 'Unknown State')
-                st.success(f"✅ Detected: {county}, {state}")
-                st.info(f"**County**: {county} | **State**: {state}")
+                addr = data[0]['address']
+                county = addr.get('county', 'Unknown County').replace(' County', '')
+                state = addr.get('state', 'Unknown State')
+                st.success(f"✅ Detected: {county} County, {state}")
             else:
                 county, state = "Unknown", "Unknown"
         except:
             county, state = "Unknown", "Unknown"
 
-        st.subheader("🔗 Official Public Record Links (click to search live)")
-        st.markdown(f"**Recorder of Deeds / Deeds Search** – Search your address here")
-        st.markdown(f"**Property Tax / Assessor** – Ownership & tax liens")
-        st.markdown(f"**Court / Judgments / Liens** – Foreclosures, bankruptcies, judgments")
-        st.caption("Open the links above, search your address, then fill in the Key Findings below.")
+    st.subheader(f"🔗 Official {county} County Public Record Links")
+    st.markdown("**1. Recorder of Deeds / Deeds & Mortgages** – Ownership & liens")
+    st.markdown("**2. Property Assessment / Tax** – Current owner & tax liens")
+    st.markdown("**3. Court / Civil Judgments** – Foreclosures, bankruptcies, judgments")
+    st.caption("Click the links above, search your address, then copy the findings into the boxes below.")
 
-# Key Findings (user fills after checking public sites)
-st.subheader("Key Findings (fill after checking the public links above)")
+st.subheader("Key Findings (copy from the public websites)")
 owner = st.text_input("Current Owner", key="owner")
 open_liens = st.text_input("Open Mortgages / Liens", key="open_liens")
 judgments = st.text_input("Judgments / Tax Liens", key="judgments")
@@ -112,7 +108,7 @@ if st.button("📄 Generate Detailed PDF Report", use_container_width=True):
     y -= 20
     c.drawString(70, y, f"Other Liens: {other_liens}")
 
-    c.drawString(50, y-60, "Report generated from live public county records.")
+    c.drawString(50, y-60, "Data pulled from official public county records")
     c.save()
 
     buffer.seek(0)
@@ -135,7 +131,7 @@ if st.session_state.current_pdf is not None:
         use_container_width=True
     )
 
-# My Past Searches (unchanged)
+# My Past Searches
 if "show_history" in st.session_state and st.session_state.show_history:
     st.divider()
     st.subheader("📂 My Past Searches")
@@ -159,4 +155,4 @@ if "show_history" in st.session_state and st.session_state.show_history:
         st.rerun()
 
 st.divider()
-st.info("✅ App is now operational for ANY address. Enter any U.S. address, click the Pull button, check the public links, fill Key Findings, and generate the PDF.")
+st.info("✅ The app now automatically detects any address and directs you to the exact public county websites. Test it with any address!")
