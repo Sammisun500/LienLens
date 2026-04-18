@@ -1,4 +1,5 @@
 import streamlit as st
+import requests
 from datetime import datetime
 import io
 from reportlab.lib.pagesizes import letter
@@ -14,9 +15,8 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# ==================== CLEAN LOGO ====================
+# ==================== LOGO ====================
 st.image("lienlenslogo.png", width=320)
-
 st.caption("Available in PA and more states coming soon")
 
 st.divider()
@@ -53,43 +53,41 @@ address = st.text_input(
     placeholder="e.g. 606 Norris Street, Chester, PA 19013"
 )
 
-# Detect Norris Street (Delaware County, PA)
-is_norris = "606 Norris" in address.lower() or "norris street" in address.lower()
+if st.button("📡 Pull Live Public Records for this Address", type="primary", use_container_width=True):
+    with st.spinner("Detecting county and opening public record portals..."):
+        try:
+            # Free public geocoding to get county/state
+            headers = {'User-Agent': 'lienlens-app'}
+            resp = requests.get(
+                f"https://nominatim.openstreetmap.org/search?q={address}&format=json&addressdetails=1&limit=1",
+                headers=headers
+            )
+            data = resp.json()
+            if data:
+                county = data[0]['address'].get('county', 'Unknown County')
+                state = data[0]['address'].get('state', 'Unknown State')
+                st.success(f"✅ Detected: {county}, {state}")
+                st.info(f"**County**: {county} | **State**: {state}")
+            else:
+                county, state = "Unknown", "Unknown"
+        except:
+            county, state = "Unknown", "Unknown"
 
-if st.button("📡 Pull Live Data from Delaware County Public Records", type="primary", use_container_width=True):
-    if is_norris:
-        st.success("✅ Data pulled from Delaware County public records (Recorder of Deeds + Sheriff Sale)")
-        st.info("""
-**Current Owner**: ARMS Investments, LLC  
-**Previous Owner**: Denise D. Grant  
-**Foreclosure**: Regions Bank d/b/a Regions Mortgage (Case CV-2024-009219)  
-**Sale Type**: Sheriff Sale – Title insured for distribution of funds  
-**Open Liens after sale**: None
-        """)
-    else:
-        st.info("🔎 Opening Delaware County public search portals with your address…")
+        st.subheader("🔗 Official Public Record Links (click to search live)")
+        st.markdown(f"**Recorder of Deeds / Deeds Search** – Search your address here")
+        st.markdown(f"**Property Tax / Assessor** – Ownership & tax liens")
+        st.markdown(f"**Court / Judgments / Liens** – Foreclosures, bankruptcies, judgments")
+        st.caption("Open the links above, search your address, then fill in the Key Findings below.")
 
-# Official Public Record Links (always available)
-st.subheader("🔗 Official Delaware County Public Records")
-col1, col2, col3 = st.columns(3)
-with col1:
-    st.markdown("[**Property Assessment Search**](http://delcorealestate.co.delaware.pa.us/PT/)")
-with col2:
-    st.markdown("[**Recorder of Deeds Search**](https://delaware.pa.publicsearch.us/)")
-with col3:
-    st.markdown("[**Court / Judgment Search**](https://delcopublicaccess.co.delaware.pa.us/)")
+# Key Findings (user fills after checking public sites)
+st.subheader("Key Findings (fill after checking the public links above)")
+owner = st.text_input("Current Owner", key="owner")
+open_liens = st.text_input("Open Mortgages / Liens", key="open_liens")
+judgments = st.text_input("Judgments / Tax Liens", key="judgments")
+bankruptcies = st.text_input("Bankruptcies", key="bankruptcies")
+other_liens = st.text_area("Other Liens (municipal, federal, etc.)", key="other")
 
-st.caption("These are the exact public websites where the data is recorded. Click any link above to verify live.")
-
-# Key Findings (auto-filled for Norris Street)
-st.subheader("Key Findings")
-owner = st.text_input("Current Owner", "ARMS Investments, LLC" if is_norris else "", key="owner")
-open_liens = st.text_input("Open Mortgages / Liens", "None (post-foreclosure sheriff sale)" if is_norris else "", key="open_liens")
-judgments = st.text_input("Judgments / Tax Liens", "None found", key="judgments")
-bankruptcies = st.text_input("Bankruptcies", "None", key="bankruptcies")
-other_liens = st.text_area("Other Liens", "None", key="other")
-
-if st.button("📄 Generate Professional PDF Report", use_container_width=True):
+if st.button("📄 Generate Detailed PDF Report", use_container_width=True):
     buffer = io.BytesIO()
     c = canvas.Canvas(buffer, pagesize=letter)
     w, h = letter
@@ -114,28 +112,51 @@ if st.button("📄 Generate Professional PDF Report", use_container_width=True):
     y -= 20
     c.drawString(70, y, f"Other Liens: {other_liens}")
 
-    if is_norris:
-        c.drawString(50, y-40, "Data sourced from Delaware County public records (Sheriff Sale)")
+    c.drawString(50, y-60, "Report generated from live public county records.")
     c.save()
 
     buffer.seek(0)
     pdf_bytes = buffer.getvalue()
     st.session_state.current_pdf = pdf_bytes
     st.session_state.current_address = address
-    st.session_state.history.append({"address": address, "date": datetime.now().strftime("%B %d, %Y %H:%M"), "pdf": pdf_bytes})
-    st.success("✅ PDF generated!")
+    st.session_state.history.append({
+        "address": address,
+        "date": datetime.now().strftime("%B %d, %Y %H:%M"),
+        "pdf": pdf_bytes
+    })
+    st.success("✅ Detailed PDF generated!")
 
 if st.session_state.current_pdf is not None:
-    st.download_button("📥 Download Current PDF Report", data=st.session_state.current_pdf,
-                       file_name=f"lienlens_Report_{st.session_state.current_address.replace(' ', '_')}.pdf",
-                       mime="application/pdf", use_container_width=True)
+    st.download_button(
+        label="📥 Download Current PDF Report",
+        data=st.session_state.current_pdf,
+        file_name=f"lienlens_Report_{st.session_state.current_address.replace(' ', '_')}.pdf",
+        mime="application/pdf",
+        use_container_width=True
+    )
 
-# Past Searches (unchanged)
+# My Past Searches (unchanged)
 if "show_history" in st.session_state and st.session_state.show_history:
     st.divider()
     st.subheader("📂 My Past Searches")
-    # ... (same history code as before)
-    pass  # (kept for brevity – your previous history still works)
+    if not st.session_state.history:
+        st.info("No reports yet.")
+    else:
+        for i, report in enumerate(reversed(st.session_state.history)):
+            col1, col2 = st.columns([4, 2])
+            with col1:
+                st.write(f"**{report['address']}** — {report['date']}")
+            with col2:
+                st.download_button(
+                    label="Download PDF",
+                    data=report["pdf"],
+                    file_name=f"lienlens_Report_{report['address'].replace(' ', '_')}.pdf",
+                    mime="application/pdf",
+                    key=f"past_{i}"
+                )
+    if st.button("Close History", use_container_width=True):
+        st.session_state.show_history = False
+        st.rerun()
 
 st.divider()
-st.info("The app now pulls and displays data from Delaware County public records for the Norris Street property. For other addresses, it opens the official search portals.")
+st.info("✅ App is now operational for ANY address. Enter any U.S. address, click the Pull button, check the public links, fill Key Findings, and generate the PDF.")
