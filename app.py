@@ -77,20 +77,4 @@ else:
             
             # Add more sections like your samples...
             c.drawString(50, y-40, "Full details match your uploaded Norris Title / ALTA Commitment style.")
-            streamlit
-pandas
-reportlab
-            c.save()
             
-            buffer.seek(0)
-            st.download_button(
-                label="📥 Download Full PDF Report",
-                data=buffer,
-                file_name=f"LienLens_Report_{address.replace(' ', '_')}.pdf",
-                mime="application/pdf"
-            )
-            st.success("Report generated! (Matches your sample formatting)")
-
-    st.divider()
-    st.subheader("Your Searches")
-    st.info("1 free search used. Upgrade for more → (Stripe integration ready)")
