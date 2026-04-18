@@ -77,6 +77,9 @@ else:
             
             # Add more sections like your samples...
             c.drawString(50, y-40, "Full details match your uploaded Norris Title / ALTA Commitment style.")
+            streamlit
+pandas
+reportlab
             c.save()
             
             buffer.seek(0)
