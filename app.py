@@ -16,25 +16,20 @@ st.markdown("""
 <style>
     .main {background-color: #f8f9fa;}
     .stButton>button {background-color: #1e3a8a; color: white; border-radius: 8px; height: 3em; font-weight: bold;}
-    h1 {color: #1e3a8a; font-size: 2.8rem; margin-bottom: 0;}
-    .header {font-size: 1.8rem; color: #1e3a8a; font-weight: bold;}
     .stTextInput>div>div>input {border-radius: 8px;}
 </style>
 """, unsafe_allow_html=True)
 
-# ==================== HEADER ====================
-try:
-    st.image("logo.png", width=180)
-except:
-    st.markdown("# 🛡️ **lienlens**")
+# ==================== NEW LOGO HEADER ====================
+st.image("lienlenslogo.png", use_column_width=True)
 
 st.caption("Available in PA and more states coming soon")
 
 st.divider()
 
-# ==================== SESSION STATE FOR HISTORY ====================
+# ==================== SESSION STATE ====================
 if "history" not in st.session_state:
-    st.session_state.history = []          # stores past reports
+    st.session_state.history = []
 if "current_pdf" not in st.session_state:
     st.session_state.current_pdf = None
 if "current_address" not in st.session_state:
@@ -45,17 +40,17 @@ with st.sidebar:
     st.markdown("### 📍 Navigation")
     st.success("✅ Logged in as Sammisun500")
     
-    if st.button("🏠 New Search", use_container_width=True):
+    if st.button("🏠 New Search", use_column_width=True):
         st.session_state.current_pdf = None
         st.rerun()
     
-    if st.button("📂 My Past Searches", use_container_width=True):
+    if st.button("📂 My Past Searches", use_column_width=True):
         st.session_state.show_history = True
     
     st.divider()
     st.markdown("### 💳 Pricing")
     st.info("**Free** — 1 search\n\n**Pro** — $49/mo (unlimited)\n\n**Enterprise** — $99/mo (API + team)")
-    if st.button("Upgrade to Pro", use_container_width=True):
+    if st.button("Upgrade to Pro", use_column_width=True):
         st.success("Stripe coming soon!")
 
     st.divider()
@@ -69,7 +64,7 @@ address = st.text_input(
     placeholder="e.g. 606 Norris Street, Chester, PA 19013"
 )
 
-if st.button("🚀 Run Full Title Search", type="primary", use_container_width=True):
+if st.button("🚀 Run Full Title Search", type="primary", use_column_width=True):
     st.success("✅ Connected to Delaware County, PA public records")
     
     col1, col2 = st.columns([1, 1])
@@ -87,7 +82,7 @@ if st.button("🚀 Run Full Title Search", type="primary", use_container_width=T
         bankruptcies = st.text_input("Bankruptcies", "None", key="bankruptcies")
         other_liens = st.text_area("Other Liens", "None", key="other")
 
-    if st.button("📄 Generate Professional PDF Report", use_container_width=True):
+    if st.button("📄 Generate Professional PDF Report", use_column_width=True):
         buffer = io.BytesIO()
         c = canvas.Canvas(buffer, pagesize=letter)
         w, h = letter
@@ -118,11 +113,9 @@ if st.button("🚀 Run Full Title Search", type="primary", use_container_width=T
         buffer.seek(0)
         pdf_bytes = buffer.getvalue()
         
-        # Save current PDF
         st.session_state.current_pdf = pdf_bytes
         st.session_state.current_address = address
         
-        # Add to history
         st.session_state.history.append({
             "address": address,
             "date": datetime.now().strftime("%B %d, %Y %H:%M"),
@@ -131,22 +124,21 @@ if st.button("🚀 Run Full Title Search", type="primary", use_container_width=T
         
         st.success("✅ PDF generated and saved to history!")
 
-# Show current PDF download button
 if st.session_state.current_pdf is not None:
     st.download_button(
         label="📥 Download Current PDF Report",
         data=st.session_state.current_pdf,
         file_name=f"lienlens_Report_{st.session_state.current_address.replace(' ', '_')}.pdf",
         mime="application/pdf",
-        use_container_width=True
+        use_column_width=True
     )
 
-# ==================== MY PAST SEARCHES ====================
+# My Past Searches
 if "show_history" in st.session_state and st.session_state.show_history:
     st.divider()
     st.subheader("📂 My Past Searches")
     if len(st.session_state.history) == 0:
-        st.info("No previous reports yet. Run a search and generate a PDF to see them here.")
+        st.info("No previous reports yet.")
     else:
         for i, report in enumerate(reversed(st.session_state.history)):
             col1, col2 = st.columns([4, 2])
@@ -165,4 +157,4 @@ if "show_history" in st.session_state and st.session_state.show_history:
         st.rerun()
 
 st.divider()
-st.info("All your PDF reports are now automatically saved in “My Past Searches”. Test it out!")
+st.info("✅ Your new logo is now live at the top of the app!")
