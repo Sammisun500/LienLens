@@ -20,8 +20,8 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# ==================== SMALLER LOGO HEADER ====================
-st.image("lienlenslogo.png", width=320)   # ← sized to ~1 inch wide
+# ==================== CLEAN LOGO HEADER ====================
+st.image("lienlenslogo.png", width=320)   # clean ~1 inch size, no background
 
 st.caption("Available in PA and more states coming soon")
 
@@ -157,4 +157,4 @@ if "show_history" in st.session_state and st.session_state.show_history:
         st.rerun()
 
 st.divider()
-st.info("✅ Logo is now smaller and error is fixed. Test the PDF button again!")
+st.info("✅ New clean logo is now live!")
