@@ -20,8 +20,8 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# ==================== NEW LOGO HEADER ====================
-st.image("lienlenslogo.png", use_column_width=True)
+# ==================== SMALLER LOGO HEADER ====================
+st.image("lienlenslogo.png", width=320)   # ← sized to ~1 inch wide
 
 st.caption("Available in PA and more states coming soon")
 
@@ -40,17 +40,17 @@ with st.sidebar:
     st.markdown("### 📍 Navigation")
     st.success("✅ Logged in as Sammisun500")
     
-    if st.button("🏠 New Search", use_column_width=True):
+    if st.button("🏠 New Search", use_container_width=True):
         st.session_state.current_pdf = None
         st.rerun()
     
-    if st.button("📂 My Past Searches", use_column_width=True):
+    if st.button("📂 My Past Searches", use_container_width=True):
         st.session_state.show_history = True
     
     st.divider()
     st.markdown("### 💳 Pricing")
     st.info("**Free** — 1 search\n\n**Pro** — $49/mo (unlimited)\n\n**Enterprise** — $99/mo (API + team)")
-    if st.button("Upgrade to Pro", use_column_width=True):
+    if st.button("Upgrade to Pro", use_container_width=True):
         st.success("Stripe coming soon!")
 
     st.divider()
@@ -64,7 +64,7 @@ address = st.text_input(
     placeholder="e.g. 606 Norris Street, Chester, PA 19013"
 )
 
-if st.button("🚀 Run Full Title Search", type="primary", use_column_width=True):
+if st.button("🚀 Run Full Title Search", type="primary", use_container_width=True):
     st.success("✅ Connected to Delaware County, PA public records")
     
     col1, col2 = st.columns([1, 1])
@@ -82,7 +82,7 @@ if st.button("🚀 Run Full Title Search", type="primary", use_column_width=True
         bankruptcies = st.text_input("Bankruptcies", "None", key="bankruptcies")
         other_liens = st.text_area("Other Liens", "None", key="other")
 
-    if st.button("📄 Generate Professional PDF Report", use_column_width=True):
+    if st.button("📄 Generate Professional PDF Report", use_container_width=True):
         buffer = io.BytesIO()
         c = canvas.Canvas(buffer, pagesize=letter)
         w, h = letter
@@ -130,10 +130,10 @@ if st.session_state.current_pdf is not None:
         data=st.session_state.current_pdf,
         file_name=f"lienlens_Report_{st.session_state.current_address.replace(' ', '_')}.pdf",
         mime="application/pdf",
-        use_column_width=True
+        use_container_width=True
     )
 
-# My Past Searches
+# ==================== MY PAST SEARCHES ====================
 if "show_history" in st.session_state and st.session_state.show_history:
     st.divider()
     st.subheader("📂 My Past Searches")
@@ -152,9 +152,9 @@ if "show_history" in st.session_state and st.session_state.show_history:
                     mime="application/pdf",
                     key=f"past_{i}"
                 )
-    if st.button("Close History"):
+    if st.button("Close History", use_container_width=True):
         st.session_state.show_history = False
         st.rerun()
 
 st.divider()
-st.info("✅ Your new logo is now live at the top of the app!")
+st.info("✅ Logo is now smaller and error is fixed. Test the PDF button again!")
